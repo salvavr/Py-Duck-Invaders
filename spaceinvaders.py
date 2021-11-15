@@ -42,7 +42,6 @@ BLOCKERS_POSITION = 450  # Altura de las barricadas
 ENEMY_DEFAULT_POSITION = 65  # Posición inicial de los enemigos
 ENEMY_MOVE_DOWN = 35  # Salto hacia abajo de los enemigos
 
-
 # Clase que usaremos para nuestro héroe
 class Man(sprite.Sprite):
     def __init__(self):
@@ -101,6 +100,8 @@ class Enemy(sprite.Sprite):
             self.index = 0
         self.image = self.images[self.index]
 
+    # Con esta función cambiamos la dirección en la que miran los patitos cada vez que cambian de sentido.
+    # Recorremos el Array de imágenes y volteamos horizontalmente cada imagen
     def change_direction(self):
         c = 0
         for img in self.images:
@@ -108,18 +109,24 @@ class Enemy(sprite.Sprite):
             self.images[c] = img
             c += 1
 
+    # Esta función sirve para limpiar la pantalla y poder renderizar el siguiente frame
     def update(self, *args):
         game.screen.blit(self.image, self.rect)
 
+    # Función que cargará nuestras imágenes (los enemigos)
     def load_images(self):
-        images = {0: ['1_2', '1_1'],
-                  1: ['2_2', '2_1'],
+        images = {0: ['1_2', '1_1'],  # En esta línea tenemos un diccionario que usaremos
+                  1: ['2_2', '2_1'],  # para cargar todas las distintas imágenes de nuestros patos
                   2: ['2_2', '2_1'],
                   3: ['3_1', '3_2'],
                   4: ['3_1', '3_2'],
                   }
+
+        # Cargamos las dos imágenes (frames) de cada enemigo para conseguir la animación
         img1, img2 = (IMAGES['enemy{}'.format(img_num)] for img_num in
                       images[self.row])
+
+        # Escalamos e incorporamos las imágenes previamente cargadas a un array que las almacenará
         self.images.append(transform.scale(img1, (40, 35)))
         self.images.append(transform.scale(img2, (40, 35)))
 
@@ -129,52 +136,65 @@ class EnemiesGroup(sprite.Group):
     def __init__(self, columns, rows):
         sprite.Group.__init__(self)
         self.enemies = [[None] * columns for _ in range(rows)]
-        self.columns = columns
-        self.rows = rows
+        self.columns = columns  # Esta será la cantidad de columnas de patitos que generaremos
+        self.rows = rows  # Esta será la cantidad de filas de patitos que generaremos
         self.leftAddMove = 0
         self.rightAddMove = 0
         self.moveTime = 600  # Tiempo entre saltitos de los enemigos. Default -> 600
         self.direction = 1
-        self.rightMoves = 30
-        self.leftMoves = 30
-        self.moveNumber = 15
-        self.timer = time.get_ticks()
-        self.bottom = game.enemyPosition + ((rows - 1) * 45) + 35
-        self._aliveColumns = list(range(columns))
-        self._leftAliveColumn = 0
-        self._rightAliveColumn = columns - 1
+        self.rightMoves = 30  # Cantidad de saltos que los patos darán antes de cambiar de sentido (hacia la derecha)
+        self.leftMoves = 30  # Cantidad de saltos que los patos darán antes de cambiar de sentido (hacia la izquierda)
+        self.moveNumber = 15  # Cantidad de saltos que los patos han dado. Inicialmente es 15 porque aparecen en mitad
+                              # de la pantalla (y han de llegar a 30)
+        self.timer = time.get_ticks()  # Temporizador que usaremos para controlar el movimiento
+        self.bottom = game.enemyPosition + ((rows - 1) * 45) + 35  # Esta variable la usaremos para saber cuándo los
+                                                                   # patos han llegado al suelo
+        self._aliveColumns = list(range(columns))  # En esta variable almacenaremos las columnas de patos que siguen
+                                                   # vivas. Nos hará falta para saber cuándo deberán cambiar de sentido
+        self._leftAliveColumn = 0  # Esta variable, junto con su homónima declarada en la línea siguiente será un
+        self._rightAliveColumn = columns - 1  # complemento de la anterior. Esto es, tendrán el mismo propósito.
 
+    # Con esta función, cada vez que ejecutemos esta función se actualizarán los patos.
+    # Concretamente controlamos el movimiento.
     def update(self, current_time):
+        # Utilizamos el temporizador de la clase para mover los patos cada vez que llegue al tiempo que previamente
+        # hemos establecido en self.moveTime
         if current_time - self.timer > self.moveTime:
-            if self.direction == 1:
+            if self.direction == 1:  # Comprobamos si los patos van hacia la derecha, en cuyo caso los moveremos
+                                     # en dicha dirección
                 max_move = self.rightMoves + self.rightAddMove
-            else:
+            else:  # Si los patos van hacia la izquierda, los movemos de la misma forma
                 max_move = self.leftMoves + self.leftAddMove
 
+            # Controlamos cuándo los patos llegan al final de la pantalla y han de cambiar de sentido
             if self.moveNumber >= max_move:
-                self.leftMoves = 30 + self.rightAddMove
-                self.rightMoves = 30 + self.leftAddMove
-                self.direction *= -1  # También podemos hacer (self.direction = -self.direction)
-                self.moveNumber = 0
-                self.bottom = 0
+                self.leftMoves = 30 + self.rightAddMove  # Reseteamos las variables que controlan la cantidad de
+                self.rightMoves = 30 + self.leftAddMove  # saltitos en ambas direcciones
+                self.direction *= -1  # También podemos hacer (self.direction = -self.direction). Con esto conseguimos
+                                      # el cambio de dirección de los patos.
+                self.moveNumber = 0  # Reseteamos el número de saltitos que han dado los patos
+                self.bottom = 0  # Reseteamos la variable que controla cuándo los patos llegan al suelo. La
+                                 # actualizaremos en el siguiente bucle for.
 
+                # Recorremos todos los enemigos restantes
                 for enemy in self:
+                    # Para cada enemigo vivo, llamamos a la función change_direction para hacerlos cambiar de sentido
                     enemy.change_direction()
                     enemy.rect.y += ENEMY_MOVE_DOWN
                     enemy.toggle_image()  # Llamamos a la función toggle_image() para dibujar solo los patos vivos
                     if self.bottom < enemy.rect.y + 35:  # Comprobamos cuál es la última línea de patos
                         self.bottom = enemy.rect.y + 35  # Guardamos la altura de la misma en la variable self.bottom
             else:
-                velocity = 10 if self.direction == 1 else -10
-                for enemy in self:
-                    enemy.rect.x += velocity
+                velocity = 10 if self.direction == 1 else -10  # Ajustamos la velocidad dependiendo del sentido
+                for enemy in self:  #
+                    enemy.rect.x += velocity  #
                     enemy.toggle_image()
                 self.moveNumber += 1
 
             self.timer += self.moveTime
 
     def add_internal(self, *sprites):
-        super(EnemiesGroup, self).add_internal(*sprites)
+        super(EnemiesGroup, self).add_internal(*sprites)  # WTF
         for s in sprites:
             self.enemies[s.row][s.column] = s
 
