@@ -6,7 +6,7 @@ from os.path import abspath, dirname
 from random import choice
 
 # Definimos las rutas que usaremos posteriormente para acceder a los 'assets' del juego
-BASE_PATH = abspath(dirname(__file__))
+BASE_PATH = abspath(dirname(__file__))  # Toma la ruta absoluta de los archivos pero sin el nombre del archivo
 FONT_PATH = BASE_PATH + '/fonts/'
 IMAGE_PATH = BASE_PATH + '/images/'
 SOUND_PATH = BASE_PATH + '/sounds/'
@@ -20,11 +20,11 @@ BLUE = (107, 138, 187)
 PURPLE = (212, 109, 146)
 RED = (237, 28, 36)
 GREY = (222, 207, 206)
-
+# Establecemos dimensiones de la ventana y fuente tipográfica a usar
 SCREEN = display.set_mode((800, 600))
 FONT = FONT_PATH + 'space_invaders.ttf'
 
-# Definimos los nombres de las imágenes en un array
+# Definimos los nombres de las imágenes en un array para luego acceder más comodamente
 IMG_NAMES = ['man', 'mystery',
              'enemy1_1', 'enemy1_2',
              'enemy2_1', 'enemy2_2',
@@ -32,62 +32,69 @@ IMG_NAMES = ['man', 'mystery',
              'explosionblue', 'explosiongreen', 'explosionpurple',
              'laser', 'enemylaser']
 
-# Cargamos todas las imágenes y las almacenamos en IMAGES
+# Con un For cargamos todas las imágenes para almacenarlas en el diccionario IMAGES, utilizando
+# una función que recoge la ruta de la imagen y le añade la extensión .png, además le añadimos
+# transparencia con convert.alpha
 IMAGES = {name: image.load(IMAGE_PATH + '{}.png'.format(name)).convert_alpha()
           for name in IMG_NAMES}
 
-# Altura de los obstáculos
-BLOCKERS_POSITION = 450
+BLOCKERS_POSITION = 450  # Altura de las barricadas
 ENEMY_DEFAULT_POSITION = 65  # Posición inicial de los enemigos
 ENEMY_MOVE_DOWN = 35  # Salto hacia abajo de los enemigos
 
 
-# Clase para nuestro personaje
-class Ship(sprite.Sprite):
+# Clase que usaremos para nuestro héroe
+class Man(sprite.Sprite):
     def __init__(self):
         sprite.Sprite.__init__(self)
-        self.image = IMAGES['man']
-        self.rect = self.image.get_rect(topleft=(375, 510))
+        self.image = IMAGES['man']  # Cargamos la imagen
+        self.rect = self.image.get_rect(topleft=(375, 510))  # 
         self.speed = 5
 
+    # Función para gestionar el movimiento del héroe
     def update(self, keys, *args):
-        if keys[K_LEFT] and self.rect.x > 10:
+        if keys[K_LEFT] and self.rect.x > 1:  # Movimiento a la izq sin salir de la ventana
             self.rect.x -= self.speed
-        if keys[K_RIGHT] and self.rect.x < 740:
+        if keys[K_RIGHT] and self.rect.x < 760:  # Movimiento a la derecha sin salir de la ventana
             self.rect.x += self.speed
         game.screen.blit(self.image, self.rect)
 
 
-# Clase para nuestros proyectiles
+# Clase para los proyectiles
 class Bullet(sprite.Sprite):
     def __init__(self, xpos, ypos, direction, speed, filename, side):
         sprite.Sprite.__init__(self)
-        self.image = IMAGES[filename]
-        self.rect = self.image.get_rect(topleft=(xpos, ypos))
-        self.speed = speed
-        self.direction = direction
+        self.image = IMAGES[filename]  # Definimos cuál será su imagen
+        self.rect = self.image.get_rect(topleft=(xpos, ypos))  # La posición del disparo la recibimos por parámetro
+        self.speed = speed  # Velocidad del proyectil
+        self.direction = direction  # Dirección del proyectil
         self.side = side
         self.filename = filename
 
+    # Función que actualiza la posición de los proyectiles
     def update(self, keys, *args):
         game.screen.blit(self.image, self.rect)
-        self.rect.y += self.speed * self.direction
+        self.rect.y += self.speed * self.direction  # El proyectil irá hacia arriba o hacia abajo según la dirección
+        # Eliminamos el proyectil al salir de los límites de nuestra ventana
         if self.rect.y < 15 or self.rect.y > 600:
             self.kill()
 
 
-# Clase para los enemigos
+# Clase para los enemigos (patitos)
 class Enemy(sprite.Sprite):
     def __init__(self, row, column):
         sprite.Sprite.__init__(self)
         self.row = row
         self.column = column
-        self.images = []
-        self.load_images()
-        self.index = 0
-        self.image = self.images[self.index]
+        self.images = []  # Array para almacenar las imágenes de los patitos
+        self.load_images()  # Cargamos las imágenes
+        self.index = 0  # Índice para indicar la posición en el Array
+        self.image = self.images[self.index]  # Establecemos la imagen con el Array y el índice
         self.rect = self.image.get_rect()
 
+    # Función con la que recorremos el Array y que nos servirá para dibujar los patos que aún esten vivos.
+    # Usaremos esta función posteriormente. Con ella definimos qué patitos habrán de dibujarse.
+    # Esto lo conseguiremos recorriendo el array de enemigos vivos y llamando a esta función para cada uno de ellos.
     def toggle_image(self):
         self.index += 1
         if self.index >= len(self.images):
@@ -117,7 +124,7 @@ class Enemy(sprite.Sprite):
         self.images.append(transform.scale(img2, (40, 35)))
 
 
-# Clase que usaremos para el movimiento de los enemigos
+# Clase que usaremos para el movimiento de los patos
 class EnemiesGroup(sprite.Group):
     def __init__(self, columns, rows):
         sprite.Group.__init__(self)
@@ -154,9 +161,9 @@ class EnemiesGroup(sprite.Group):
                 for enemy in self:
                     enemy.change_direction()
                     enemy.rect.y += ENEMY_MOVE_DOWN
-                    enemy.toggle_image()
-                    if self.bottom < enemy.rect.y + 35:
-                        self.bottom = enemy.rect.y + 35
+                    enemy.toggle_image()  # Llamamos a la función toggle_image() para dibujar solo los patos vivos
+                    if self.bottom < enemy.rect.y + 35:  # Comprobamos cuál es la última línea de patos
+                        self.bottom = enemy.rect.y + 35  # Guardamos la altura de la misma en la variable self.bottom
             else:
                 velocity = 10 if self.direction == 1 else -10
                 for enemy in self:
@@ -211,6 +218,7 @@ class EnemiesGroup(sprite.Group):
                 self.leftAddMove += 5
                 is_column_dead = self.is_column_dead(self._leftAliveColumn)
 
+
 # Clase para las barricadas
 class Blocker(sprite.Sprite):
     def __init__(self, size, color, row, column):
@@ -226,6 +234,7 @@ class Blocker(sprite.Sprite):
 
     def update(self, keys, *args):
         game.screen.blit(self.image, self.rect)
+
 
 # Clase para el X-Wing Fighter
 class Mystery(sprite.Sprite):
@@ -310,9 +319,9 @@ class MysteryExplosion(sprite.Sprite):
             self.kill()
 
 
-class ShipExplosion(sprite.Sprite):
+class ManDeath(sprite.Sprite):
     def __init__(self, ship, *groups):
-        super(ShipExplosion, self).__init__(*groups)
+        super(ManDeath, self).__init__(*groups)
         self.image = IMAGES['man']
         self.rect = self.image.get_rect(topleft=(ship.rect.x, ship.rect.y))
         self.timer = time.get_ticks()
@@ -380,7 +389,7 @@ class SpaceInvaders(object):
         self.livesGroup = sprite.Group(self.life1, self.life2, self.life3)
 
     def reset(self, score):
-        self.player = Ship()
+        self.player = Man()
         self.playerGroup = sprite.Group(self.player)
         self.explosionsGroup = sprite.Group()
         self.bullets = sprite.Group()
@@ -450,7 +459,7 @@ class SpaceInvaders(object):
                 if e.key == K_SPACE:
                     if len(self.bullets) == 0 and self.shipAlive:
                         if self.score < 1000:
-                            bullet = Bullet(self.player.rect.x + 23,
+                            bullet = Bullet(self.player.rect.x + 19.5,
                                             self.player.rect.y + 5, -1,
                                             15, 'laser', 'center')
                             self.bullets.add(bullet)
@@ -547,7 +556,7 @@ class SpaceInvaders(object):
                 self.gameOver = True
                 self.startGame = False
             self.sounds['shipexplosion'].play()
-            ShipExplosion(player, self.explosionsGroup)
+            ManDeath(player, self.explosionsGroup)
             self.makeNewShip = True
             self.shipTimer = time.get_ticks()
             self.shipAlive = False
@@ -565,7 +574,7 @@ class SpaceInvaders(object):
 
     def create_new_ship(self, createShip, currentTime):
         if createShip and (currentTime - self.shipTimer > 900):
-            self.player = Ship()
+            self.player = Man()
             self.allSprites.add(self.player)
             self.playerGroup.add(self.player)
             self.makeNewShip = False
