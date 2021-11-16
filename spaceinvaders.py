@@ -140,7 +140,7 @@ class EnemiesGroup(sprite.Group):
         self.rows = rows  # Esta será la cantidad de filas de patitos que generaremos
         self.leftAddMove = 0
         self.rightAddMove = 0
-        self.moveTime = 600  # Tiempo entre saltitos de los enemigos. Default -> 600
+        self.moveTime = 300  # Tiempo entre saltitos de los enemigos. Default -> 600
         self.direction = 1
         self.rightMoves = 30  # Cantidad de saltos que los patos darán antes de cambiar de sentido (hacia la derecha)
         self.leftMoves = 30  # Cantidad de saltos que los patos darán antes de cambiar de sentido (hacia la izquierda)
@@ -186,46 +186,62 @@ class EnemiesGroup(sprite.Group):
                         self.bottom = enemy.rect.y + 35  # Guardamos la altura de la misma en la variable self.bottom
             else:
                 velocity = 10 if self.direction == 1 else -10  # Ajustamos la velocidad dependiendo del sentido
-                for enemy in self:  #
-                    enemy.rect.x += velocity  #
-                    enemy.toggle_image()
-                self.moveNumber += 1
+                for enemy in self:
+                    enemy.rect.x += velocity  # Movemos los patitos de lugar en el eje x según la velocidad
+                    enemy.toggle_image()  # Llamamos a la función toggle_image() para dibujar solo los patos vivos
+                self.moveNumber += 1  # Añadimos +1 a la cantidad de saltos que han dado los patos
 
-            self.timer += self.moveTime
+            self.timer += self.moveTime  # Actualizamos el temporizador para el siguiente saltito
 
-    def add_internal(self, *sprites):
-        super(EnemiesGroup, self).add_internal(*sprites)  # WTF
-        for s in sprites:
-            self.enemies[s.row][s.column] = s
+    # Función que usaremos para activar a todos los enemigos uno por uno
+    def add_internal(self, *sprite):
+        super(EnemiesGroup, self).add_internal(*sprite)  # Con el operador * pasamos la tupla entera como argumento
+        for s in sprite:
+            self.enemies[s.row][s.column] = s  # Almacenamos los enemigos en su array correspondiente
 
+    # De la misma forma que la función anterior, con esta eliminaremos los enemigos que debamos
     def remove_internal(self, *sprites):
         super(EnemiesGroup, self).remove_internal(*sprites)
         for s in sprites:
-            self.kill(s)
-        self.update_speed()
+            self.kill(s)  # Utilizamos la función kill que definiremos más adelante
+        self.update_speed()  # Utilizamos la función update que definiremos más adelante
 
+    # Con este método calculamos si la columna que pasemos como parámetro esta completamente eliminada
+    # https://stackoverflow.com/questions/19389490/how-do-pythons-any-and-all-functions-work
     def is_column_dead(self, column):
-        return not any(self.enemies[row][column]
-                       for row in range(self.rows))
+        return not any(self.enemies[row][column]  # Utilizamos any junto con una negación para dicho propósito (any
+                       for row in range(self.rows))  # devolverá True si encuentra un elemento, pero al negarlo con not
+                                                     # devolverá False (es decir, columna no muerta))
 
+    # Con esta función elegimos un pato aleatorio de la fila inferior, el cual efectuará un disparo posteriormente
     def random_bottom(self):
-        col = choice(self._aliveColumns)
+        col = choice(self._aliveColumns)  # choice(seq) nos devuelve un elemento aleatorio de la tupla que pasemos como
+                                          # parámetro, en este caso las columnas vivas
         col_enemies = (self.enemies[row - 1][col]
-                       for row in range(self.rows, 0, -1))
-        return next((en for en in col_enemies if en is not None), None)
+                       for row in range(self.rows, 0, -1))  # Almacenamos todos los enemigos restantes
+                                                            # de la columna elegida
+        return next((en for en in col_enemies if en is not None), None)  # Devolvemos el pato en la posición inferior
 
+    # Función con la que ajustaremos la velocidad de movimiento según vayan quedado menos patos con vida
     def update_speed(self):
-        if len(self) == 1:
+        if len(self) == 1:  # Cuando quede 1 sólo pato aumentaremos la velocidad al máximo
+            self.moveTime = 100
+        elif len(self) <= 10:  # Cuando queden 10 patos o menos aumentaremos la velocidad
             self.moveTime = 200
-        elif len(self) <= 10:
-            self.moveTime = 400
 
+    # Función con la que eliminaremos los patos muertos
     def kill(self, enemy):
         self.enemies[enemy.row][enemy.column] = None
-        is_column_dead = self.is_column_dead(enemy.column)
-        if is_column_dead:
-            self._aliveColumns.remove(enemy.column)
+        is_column_dead = self.is_column_dead(enemy.column)  # Con la función is_column_dead identificamos si hay columnas
+															# con todos sus patos eliminados
+        if is_column_dead:  # Si la columna está completamente eliminada, la resta de las columnas en las que aún
+            self._aliveColumns.remove(enemy.column)  # queden patos vivos
 
+        # Con el siguiente if y elif controlamos cuándo una columna lateral ha sido completamente eliminada
+        # En tal caso, sumaremos o restaremos 1 a estas columnas respectivamente y añadiremos una cantidad de saltitos
+        # extra para que los patos sigan avanzando hasta el final de la pantalla
+        # Para ello usamos un bucle que comprueba cuando alguna de las columnas laterales ha sido completamente eliminada
+        # hasta que las columnas laterales contengan enemigos
         if enemy.column == self._rightAliveColumn:
             while self._rightAliveColumn > 0 and is_column_dead:
                 self._rightAliveColumn -= 1
@@ -239,9 +255,9 @@ class EnemiesGroup(sprite.Group):
                 is_column_dead = self.is_column_dead(self._leftAliveColumn)
 
 
-# Clase para las barricadas
+# Clase para las barricadas que recibe parámetros de la función make_blockers que esta dentro de la clase SpaceInvaders
 class Blocker(sprite.Sprite):
-    def __init__(self, size, color, row, column):
+    def __init__(self, size, color, row, column):  # (self, 10, GREEN2, row, column)
         sprite.Sprite.__init__(self)
         self.height = size
         self.width = size
@@ -252,6 +268,7 @@ class Blocker(sprite.Sprite):
         self.row = row
         self.column = column
 
+    # Función que actualiza las barricadas
     def update(self, keys, *args):
         game.screen.blit(self.image, self.rect)
 
@@ -260,24 +277,32 @@ class Blocker(sprite.Sprite):
 class Mystery(sprite.Sprite):
     def __init__(self):
         sprite.Sprite.__init__(self)
-        self.image = IMAGES['mystery']
-        self.image = transform.scale(self.image, (70, 60))
-        self.rect = self.image.get_rect(topleft=(-80, 45))
+        self.image = IMAGES['mystery']  # Asignamos la imagen de la nave del diccionario que creamos al principio
+        self.image = transform.scale(self.image, (70, 60))  # la reescalamos
+        self.rect = self.image.get_rect(topleft=(-80, 25))  # Definimos el rectángulo y sus coordenadas para el movimiento
         self.row = 5
         self.moveTime = 25000  # Tiempo que tarda la nave en volver a aparecer
-        self.direction = 1
-        self.timer = time.get_ticks()
-        self.mysteryEntered = mixer.Sound(SOUND_PATH + 'mysteryentered.wav')
-        self.mysteryEntered.set_volume(0.3)
+        self.direction = 1  # Dirección inicial de la nave
+        self.timer = time.get_ticks()  # Temporizador para actualizar el movimiento de la nave
+        self.mysteryEntered = mixer.Sound(SOUND_PATH + 'mysteryentered.wav')  # Asignamos el sonido para la nave
+        self.mysteryEntered.set_volume(0.3) # Asignamos el volumen al que se reproducirá
         self.playSound = True
 
+    # Función que actualiza el X-Wing Fighter. Se encarga principalmente de controlar su movimiento
     def update(self, keys, currentTime, *args):
         resetTimer = False
         passed = currentTime - self.timer
+
+        # Cuando passed sea mayor que self.moveTime actualizaremos nuestra nave
         if passed > self.moveTime:
+            # Cuando la nave entra en la pantalla reproducimos el sonido de entrada
             if (self.rect.x < 0 or self.rect.x > 800) and self.playSound:
                 self.mysteryEntered.play()
                 self.playSound = False
+            # Cuando la nave esté dentro de la pantalla reproducimos el sonido elegido
+            # que se irá desvaneciendo a lo largo de 4 segundos (4000 milisegundos)
+            # Los dos siguientes if hacen lo mismo con la diferencia de la dirección
+            # Dependiendo del sentido (self.direction) moveremos la nave hacia la izquierda o la derecha
             if self.rect.x < 840 and self.direction == 1:
                 self.mysteryEntered.fadeout(4000)
                 self.rect.x += 2
@@ -287,6 +312,9 @@ class Mystery(sprite.Sprite):
                 self.rect.x -= 2
                 game.screen.blit(self.image, self.rect)
 
+        # Los dos siguientes if nos indican cuándo se sale de la pantalla (por la izquierda o la derecha)
+        # Cuando se cumple dicha condición, cambiamos la dirección para cuando vuelva a aparecer y
+        # reproducimos el sonido asignado
         if self.rect.x > 830:
             self.playSound = True
             self.direction = -1
@@ -295,19 +323,23 @@ class Mystery(sprite.Sprite):
             self.playSound = True
             self.direction = 1
 
-            resetTimer = True
+            resetTimer = True  # Resteamos el temporizador
+
+        # En el caso de que el temporizador llegue al tiempo necesario para que se mueva y resetTimer sea True
+        # volvemos a establecer el temporizador al tiempo actual y volteamos la imagen
         if passed > self.moveTime and resetTimer:
             self.timer = currentTime
-            self.image = transform.flip(self.image, True, False)
+            self.image = transform.flip(self.image, True, False)  # Voltea la imagen sobre su eje horizontal
 
 
 class EnemyExplosion(sprite.Sprite):
     def __init__(self, enemy, *groups):
         super(EnemyExplosion, self).__init__(*groups)
-        self.image = transform.scale(self.get_image(enemy.row), (40, 35))
-        self.image2 = transform.scale(self.get_image(enemy.row), (50, 45))
-        self.rect = self.image.get_rect(topleft=(enemy.rect.x, enemy.rect.y))
-        self.timer = time.get_ticks()
+        self.image = transform.scale(self.get_image(enemy.row), (40, 35))   # Imagen de la explosión
+        self.image2 = transform.scale(self.get_image(enemy.row), (50, 45))  # La misma imagen de la explosión pero un poco más grande
+																			# esto crea un ligero efecto de expansión de la explosión
+        self.rect = self.image.get_rect(topleft=(enemy.rect.x, enemy.rect.y))  # Definimos el rectángulo y sus coordenadas
+        self.timer = time.get_ticks()  # Temporizador para actualizar cuando pasar de image a image2
 
     @staticmethod
     def get_image(row):
