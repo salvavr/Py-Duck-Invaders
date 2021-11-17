@@ -49,8 +49,8 @@ class Man(sprite.Sprite):
     def __init__(self):
         sprite.Sprite.__init__(self)
         self.image = IMAGES['man']  # Cargamos la imagen
-        self.rect = self.image.get_rect(topleft=(375, 510))  #
-        self.speed = 5
+        self.rect = self.image.get_rect(topleft=(375, 510))  # Dibujamos al cazador en las coordenadas especificadas
+        self.speed = 5  # Le asignamos su velocidad de desplazamiento lateral
 
     # Función para gestionar el movimiento del héroe
     def update(self, keys, *args):
@@ -265,8 +265,8 @@ class Blocker(sprite.Sprite):
         self.height = size  # Altura en píxeles
         self.width = size  # Ancho en píxeles
         self.color = color
-        self.image = Surface((self.width, self.height))
-        self.image.fill(self.color)
+        self.image = Surface((self.width, self.height))  # Ajustamos el alto y ancho de la superficie
+        self.image.fill(self.color)  # Ajustamos el color
         self.rect = self.image.get_rect()
         self.row = row
         self.column = column
@@ -451,7 +451,7 @@ class SpaceInvaders(object):
 
         # Establecemos los textos y puntuaciones de cada pato en el menú principal
         self.titleText = Text(FONT, 50, 'Py-Duck Invaders', WHITE, 134, 155)
-        self.titleText2 = Text(FONT, 25, 'Pulsa una tecla para empezar', WHITE, 170, 225)
+        self.titleText2 = Text(FONT, 25, 'Pulse una tecla para empezar', WHITE, 170, 225)
         self.gameOverText = Text(FONT, 50, 'Game Over', WHITE, 250, 270)
         self.nextRoundText = Text(FONT, 50, 'Next Round', WHITE, 240, 270)
         self.enemy1Text = Text(FONT, 25, '   =   10 pts', GREEN, 368, 270)
@@ -534,8 +534,8 @@ class SpaceInvaders(object):
             # de los patos
             self.noteTimer += self.enemies.moveTime
 
-    # Con esta función devolvemos un boolean, que será true si cerramos nuestro juego o si pulsamos alguna teclado
-    # Nos será útil posteriormente para controlal el input por teclado
+    # Con esta función devolvemos un boolean, que será true si cerramos nuestro juego o si pulsamos alguna tecla
+    # Nos será útil posteriormente para controlar el input por teclado
     @staticmethod
     def should_exit(evt):
         # type: (pygame.event.EventType) -> bool
@@ -605,20 +605,17 @@ class SpaceInvaders(object):
 
     # Función con la que definimos las puntuaciones de los patos y la nave sorpresa y las añadimos a un diccionario
     def calculate_score(self, row):
-        # Creamos un diccionario con las posibles puntuaciones
-        # El elemento con clave 5 será para el enemigo especial,
-        # que elegirá un valor aleatorio entre los 4 del array
-        scores = {0: 30,
-                  1: 20,
-                  2: 20,
+        scores = {0: 30,  # Creamos un diccionario con las posibles puntuaciones
+                  1: 20,  # El elemento con clave 5 será para el enemigo especial,
+                  2: 20,  # que elegirá un valor aleatorio entre los 4 del array
                   3: 10,
                   4: 10,
                   5: choice([50, 100, 150, 300])
                   }
-        # Elegimos la puntición que obtendremos, según lo que pasemos com parámetro
+        # Elegimos la puntuación que obtendremos, según lo que pasemos como parámetro
         score = scores[row]
         self.score += score  # Sumamos la puntuación elegida a nuestro marcador
-        return score  # Devolcemos la puntuación obtenida
+        return score  # Devolvemos la puntuación obtenida
 
     # Insertamos las imágenes correspondientes en el menú principal
     def create_main_menu(self):
