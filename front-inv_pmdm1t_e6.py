@@ -1,9 +1,10 @@
 # Py-Duck-Invaders
 
-from pygame import *
 import sys
 from os.path import abspath, dirname
 from random import choice
+
+from pygame import *
 
 # Definimos las rutas que usaremos posteriormente para acceder a los 'assets' del juego
 BASE_PATH = abspath(dirname(__file__))  # Toma la ruta absoluta de los archivos pero sin el nombre del archivo
@@ -48,7 +49,7 @@ class Man(sprite.Sprite):
     def __init__(self):
         sprite.Sprite.__init__(self)
         self.image = IMAGES['man']  # Cargamos la imagen
-        self.rect = self.image.get_rect(topleft=(375, 510))  # 
+        self.rect = self.image.get_rect(topleft=(375, 510))  #
         self.speed = 5
 
     # Función para gestionar el movimiento del héroe
@@ -261,8 +262,8 @@ class EnemiesGroup(sprite.Group):
 class Blocker(sprite.Sprite):
     def __init__(self, size, color, row, column):  # (self, 10, GREEN2, row, column)
         sprite.Sprite.__init__(self)
-        self.height = size
-        self.width = size
+        self.height = size  # Altura en píxeles
+        self.width = size  # Ancho en píxeles
         self.color = color
         self.image = Surface((self.width, self.height))
         self.image.fill(self.color)
@@ -280,9 +281,9 @@ class Mystery(sprite.Sprite):
     def __init__(self):
         sprite.Sprite.__init__(self)
         self.image = IMAGES['mystery']  # Asignamos la imagen de la nave del diccionario que creamos al principio
-        self.image = transform.scale(self.image, (70, 60))  # la reescalamos
+        self.image = transform.scale(self.image, (70, 39))  # la reescalamos
         self.rect = self.image.get_rect(
-            topleft=(-80, 25))  # Definimos el rectángulo y sus coordenadas para el movimiento
+            topleft=(-80, 30))  # Definimos el rectángulo y sus coordenadas para el movimiento
         self.row = 5
         self.moveTime = 25000  # Tiempo que tarda la nave en volver a aparecer
         self.direction = 1  # Dirección inicial de la nave
@@ -334,6 +335,7 @@ class Mystery(sprite.Sprite):
             self.image = transform.flip(self.image, True, False)  # Voltea la imagen sobre su eje horizontal
 
 
+# Clase que usamos para gestionar la animación que salta al acertar a un pato
 class EnemyExplosion(sprite.Sprite):
     def __init__(self, enemy, *groups):
         super(EnemyExplosion, self).__init__(*groups)
@@ -345,31 +347,38 @@ class EnemyExplosion(sprite.Sprite):
         # coordenadas
         self.timer = time.get_ticks()  # Temporizador para actualizar cuando pasar de image a image2
 
-    @staticmethod
     # Con esta función cargamos las imágenes según la fila en una lista y nos devolverá la imagen que necesitemos
-    # según la fila y añadiendo "explosion" delante
+    # según la fila y añadiendo "explosion" delante para que coincida con el nombre de las imágenes
+    @staticmethod
     def get_image(row):
         img_colors = ['purple', 'blue', 'blue', 'green', 'green']
         return IMAGES['explosion{}'.format(img_colors[row])]
 
-# Con esta función
+    # Con esta función controlamos la frecuencia con la que van a dibujarse las imágenes apoyándonos en el temporizador
+    # Si la resta es menos de 100 ms se dibujará una imagen, si es menos de 200 ms otra, y si han pasado más de 400 ms
+    # se borra de la pantalla
     def update(self, current_time, *args):
         passed = current_time - self.timer
         if passed <= 100:
-            game.screen.blit(self.image, self.rect)
+            game.screen.blit(self.image, self.rect)  # Dibujamos en pantalla la primera imagen
         elif passed <= 200:
-            game.screen.blit(self.image2, (self.rect.x - 6, self.rect.y - 6))
+            game.screen.blit(self.image2, (self.rect.x - 6, self.rect.y - 6))  # Restamos 6 a X/Y para corregir la
+            # posición y que coincida centrada con la primera
         elif 400 < passed:
             self.kill()
 
 
+# Clase para la animación de derribo (la puntuación) del X-Wing Fighter
 class MysteryExplosion(sprite.Sprite):
-    def __init__(self, mystery, score, *groups):
+    def __init__(self, mystery, score, *groups):  # Con el operador * pasamos la tupla entera
         super(MysteryExplosion, self).__init__(*groups)
         self.text = Text(FONT, 20, str(score), WHITE,
-                         mystery.rect.x + 20, mystery.rect.y + 6)
+                         mystery.rect.x + 20, mystery.rect.y + 6)  # Al derribar la nave mostramos el texto con la
+        # puntuación recibida, pasamos las coordenadas x+20 e y+6 para que coincidan con el sprite de la nave
         self.timer = time.get_ticks()
 
+    # Igual que con las explosiones de los patos, esta función sirve para controlar cuando dibujar o retirar el texto
+    # con la puntuación que ha dado el X-Wing Fighter con ayuda del temporizador
     def update(self, current_time, *args):
         passed = current_time - self.timer
         if passed <= 200 or 400 < passed <= 600:
@@ -378,13 +387,17 @@ class MysteryExplosion(sprite.Sprite):
             self.kill()
 
 
+# Clase para la animación de muerte del cazador
 class ManDeath(sprite.Sprite):
-    def __init__(self, ship, *groups):
-        super(ManDeath, self).__init__(*groups)
-        self.image = IMAGES['man']
-        self.rect = self.image.get_rect(topleft=(ship.rect.x, ship.rect.y))
-        self.timer = time.get_ticks()
+    def __init__(self, man, *groups):
+        super(ManDeath, self).__init__(*groups)  # Pasamos la tupla al completo con el operador *
+        self.image = IMAGES['man']  # Definimos que imagen coger del diccionario de imágenes
+        self.rect = self.image.get_rect(topleft=(man.rect.x, man.rect.y))  # Coordenadas para dibujar el rectángulo
+        self.timer = time.get_ticks()  # Temporizador
 
+    # Con esta función controlamos cuando dibujar y cuando retirar la animación de muerte del cazador
+    # Igual que con la explosión de los patos, esta función sirve para controlar cuando dibujar o retirar la animación
+    # de muerte del cazador con ayuda del temporizador
     def update(self, current_time, *args):
         passed = current_time - self.timer
         if 300 < passed <= 600:
@@ -393,44 +406,52 @@ class ManDeath(sprite.Sprite):
             self.kill()
 
 
+# Con esta clase colocamos la imagen del cazador redimensionada a 23x23 en las coordenadas X e Y que recibe por
+# parámetro la función __init__
 class Life(sprite.Sprite):
     def __init__(self, xpos, ypos):
         sprite.Sprite.__init__(self)
-        self.image = IMAGES['man']
-        self.image = transform.scale(self.image, (23, 23))
-        self.rect = self.image.get_rect(topleft=(xpos, ypos))
+        self.image = IMAGES['man']  # Definimos que imagen coger del diccionario de imágenes
+        self.image = transform.scale(self.image, (23, 23))  # Redimensionamos la imagen
+        self.rect = self.image.get_rect(topleft=(xpos, ypos))  # Definimos el rectángulo y sus coordenadas
 
+    # Con esta función pintamos las 3 imágenes para las vidas del jugador
     def update(self, *args):
-        game.screen.blit(self.image, self.rect)
+        game.screen.blit(self.image, self.rect)  # Pintamos el rectángulo en pantalla
 
 
+# Con esta clase colocamos los textos del HUD en pantalla.
+# Pasamos por parámetro la fuente a usar, tamaño, el mensaje, el color y las posiciones X e Y
 class Text(object):
     def __init__(self, textFont, size, message, color, xpos, ypos):
         self.font = font.Font(textFont, size)
         self.surface = self.font.render(message, True, color)
         self.rect = self.surface.get_rect(topleft=(xpos, ypos))
 
+    # Con esta función dibujamos en pantalla los textos
     def draw(self, surface):
         surface.blit(self.surface, self.rect)
 
 
+# Esta es la CLASE PRINCIPAL, desde la que controlamos cada elemento y llamamos a todas las funciones previas
 class SpaceInvaders(object):
     def __init__(self):
-        mixer.pre_init(44100, -16, 1, 4096)
+        mixer.pre_init(44100, -16, 1, 4096)  # Cargamos el módulo de pygame Mixer para reproducir sonidos
         init()
         self.clock = time.Clock()
-        self.caption = display.set_caption('Py-Duck Invaders')
+        self.caption = display.set_caption('Py-Duck Invaders')  # Título de la ventana
         self.screen = SCREEN
         self.background = image.load(IMAGE_PATH + 'Fondo.jpg').convert()  # Cargamos la imagen de fondo
         self.background = transform.scale(self.background, (800, 600))  # Y la ajustamos al tamaño de la ventana
         self.startGame = False
         self.mainScreen = True
         self.gameOver = False
-        # Counter for enemy starting position (increased each new round)
-        self.enemyPosition = ENEMY_DEFAULT_POSITION
+        self.enemyPosition = ENEMY_DEFAULT_POSITION  # Contador para la posición de inicio de los patos (la
+        # incrementamos en cada nueva ronda)
+
+        # Establecemos los textos y puntuaciones de cada pato en el menú principal
         self.titleText = Text(FONT, 50, 'Py-Duck Invaders', WHITE, 134, 155)
-        self.titleText2 = Text(FONT, 25, 'Pulsa una tecla para empezar', WHITE,
-                               170, 225)
+        self.titleText2 = Text(FONT, 25, 'Pulsa una tecla para empezar', WHITE, 170, 225)
         self.gameOverText = Text(FONT, 50, 'Game Over', WHITE, 250, 270)
         self.nextRoundText = Text(FONT, 50, 'Next Round', WHITE, 240, 270)
         self.enemy1Text = Text(FONT, 25, '   =   10 pts', GREEN, 368, 270)
@@ -440,89 +461,109 @@ class SpaceInvaders(object):
         self.scoreText = Text(FONT, 20, 'Puntuacion', WHITE, 5, 5)
         self.livesText = Text(FONT, 20, 'Vidas ', WHITE, 640, 5)
 
+        # Pasamos a la clase Life las coordenadas para que nos dibuje las 3 vidas ahí
         self.life1 = Life(715, 3)
         self.life2 = Life(742, 3)
         self.life3 = Life(769, 3)
-        self.livesGroup = sprite.Group(self.life1, self.life2, self.life3)
+        self.livesGroup = sprite.Group(self.life1, self.life2, self.life3)  # Agrupamos las 3 vidas en un contenedor
 
+    # Función con la que reseteamos el juego a los valores iniciales
     def reset(self, score):
         self.player = Man()
-        self.playerGroup = sprite.Group(self.player)
-        self.explosionsGroup = sprite.Group()
-        self.bullets = sprite.Group()
+        self.playerGroup = sprite.Group(self.player)  # Agrupamos los sprites del cazador
+        self.explosionsGroup = sprite.Group()  # Agrupamos los sprites de las explosiones
+        self.bullets = sprite.Group()  # Agrupamos los sprites de las balas
         self.mysteryShip = Mystery()
-        self.mysteryGroup = sprite.Group(self.mysteryShip)
-        self.enemyBullets = sprite.Group()
-        self.make_enemies()
-        self.allSprites = sprite.Group(self.player, self.enemies,
-                                       self.livesGroup, self.mysteryShip)
-        self.keys = key.get_pressed()
-
-        self.timer = time.get_ticks()
-        self.noteTimer = time.get_ticks()
-        self.shipTimer = time.get_ticks()
+        self.mysteryGroup = sprite.Group(self.mysteryShip)  # Agrupamos los sprites del X-Wing Fighter
+        self.enemyBullets = sprite.Group()  # Agrupamos los sprites de los "disparos" de los patos
+        self.make_enemies()  # Llamada a la función que se encarga de generar las matriz de patos
+        self.allSprites = sprite.Group(self.player, self.enemies, self.livesGroup, self.mysteryShip)  # Agrupamos todos
+        self.keys = key.get_pressed()  # Variable para controlar las teclas presionadas o liberadas
+        self.timer = time.get_ticks()  # Temporizador en ms
+        self.noteTimer = time.get_ticks()  # Temporizador en ms para los sonidos
+        self.manTimer = time.get_ticks()  # Temporizador en ms para el cazador
         self.score = score
-        self.create_audio()
-        self.makeNewShip = False
-        self.shipAlive = True
+        self.create_audio()  # Llamada a la función que crea los archivos de sonido
+        self.makeNewMan = False
+        self.manAlive = True
 
+    # Función para crear las 4 barricadas, recibirá el número de bloques por parámetro
     def make_blockers(self, number):
-        blockerGroup = sprite.Group()
+        blockerGroup = sprite.Group()  # Agrupamos los bloques en un contenedor
+        # Para cada bloque creamos una matriz de 4 filas y de 9 columnas
         for row in range(4):
             for column in range(9):
-                blocker = Blocker(10, GREEN2, row, column)
-                blocker.rect.x = 50 + (200 * number) + (column * blocker.width)
-                blocker.rect.y = BLOCKERS_POSITION + (row * blocker.height)
-                blockerGroup.add(blocker)
+                blocker = Blocker(10, GREEN2, row, column)  # Pasamos los parámetros a la clase Blocker
+                blocker.rect.x = 50 + (200 * number) + (column * blocker.width)  # Separamos los bloques unos de otros
+                blocker.rect.y = BLOCKERS_POSITION + (row * blocker.height)  # Altura de nºfilas*tamaño de cuadrito
+                blockerGroup.add(blocker)  # Y lo agrupamos
         return blockerGroup
 
+    # Con un For cargamos todas los nombres de los archivos de sonido para almacenarlos en el diccionario sounds,
+    # utilizando una función que recoge la ruta del archivo de sonido y le añade la extensión .wav
     def create_audio(self):
-        self.sounds = {}
-        for sound_name in ['shoot', 'shoot2', 'invaderkilled', 'mysterykilled',
-                           'shipexplosion']:
-            self.sounds[sound_name] = mixer.Sound(
-                SOUND_PATH + '{}.wav'.format(sound_name))
-            self.sounds[sound_name].set_volume(0.2)
+        self.sounds = {}  # Creamos el diccionario
+        for sound_name in ['shoot', 'shoot2', 'invaderkilled', 'mysterykilled', 'manexplosion']:
+            self.sounds[sound_name] = mixer.Sound(SOUND_PATH + '{}.wav'.format(sound_name))
+            self.sounds[sound_name].set_volume(0.2)  # Establecemos el volumen en 0.2 para estos sonidos
 
-        self.musicNotes = [mixer.Sound(SOUND_PATH + '{}.wav'.format(i)) for i
-                           in range(4)]
-        for sound in self.musicNotes:
-            sound.set_volume(0.5)
+        # Creamos un array con nuestros 4 sonidos de avance de los patos
+        self.musicNotes = [mixer.Sound(SOUND_PATH + '{}.wav'.format(i)) for i in range(4)]
+        for sound in self.musicNotes:  # Recorremos el array anterior para
+            sound.set_volume(0.5)  # establecer el volumen de los 4 sonidos a 0.5
 
+        # Inicializamos el índice de las notas a 0; usaremos este campo en la próxima función para determinar qué
+        # nota sonará
         self.noteIndex = 0
 
+    # Reproducimos nuestras 4 notas cuando corresponda
     def play_main_music(self, currentTime):
-        if currentTime - self.noteTimer > self.enemies.moveTime:
+            # Establecemos qué nota sonará, de acuerdo a nuestro índice
             self.note = self.musicNotes[self.noteIndex]
+
+            # Si no hemos llegado a nuestra última nota (índice 3), aumentamos el índice para la siguiente ejecución
             if self.noteIndex < 3:
                 self.noteIndex += 1
-            else:
+            else:  # Si llegamos al índice 3 volvemos a estrablecer el índice a 0
                 self.noteIndex = 0
 
+            # Reproducimos la nota en cuestión
             self.note.play()
+
+            # Establecemos el temporizador que controlará cuándo suena la nota para que esté sincronizado con el avance
+            # de los patos
             self.noteTimer += self.enemies.moveTime
 
+    # Con esta función devolvemos un boolean, que será true si cerramos nuestro juego o si pulsamos alguna teclado
+    # Nos será útil posteriormente para controlal el input por teclado
     @staticmethod
     def should_exit(evt):
         # type: (pygame.event.EventType) -> bool
         return evt.type == QUIT or (evt.type == KEYUP and evt.key == K_ESCAPE)
 
+    # Controlamos el input del teclado
     def check_input(self):
-        self.keys = key.get_pressed()
-        for e in event.get():
-            if self.should_exit(e):
+        self.keys = key.get_pressed()  # Recogemos qué tecla ha sido pulsada
+        for e in event.get():  # Iteramos sobre los eventos
+            if self.should_exit(e):  # Si cerramos nuestro juego, acabamos con la ejecución del programa
                 sys.exit()
-            if e.type == KEYDOWN:
-                if e.key == K_SPACE:
-                    if len(self.bullets) == 0 and self.shipAlive:
+            if e.type == KEYDOWN:  # Controlamos si pulsamos alguna tecla
+                if e.key == K_SPACE:  # Controlamos si la tecla que pulsamos es la tecla "Espacio"
+                    # Controlamos que no haya ninguna bala creada y que estemos vivos para poder disparar
+                    if len(self.bullets) == 0 and self.manAlive:
+                        # Con el siguiente if, else controlamos el tipo de disparo:
+                        # Si nuestra puntuación es menor que 1000 disparamos una bala,
+                        # de lo contrario disparamos 2
                         if self.score < 1000:
+                            # Creamos la bala en la posición del jugador
                             bullet = Bullet(self.player.rect.x + 19.5,
                                             self.player.rect.y + 5, -1,
                                             15, 'laser', 'center')
-                            self.bullets.add(bullet)
-                            self.allSprites.add(self.bullets)
-                            self.sounds['shoot'].play()
+                            self.bullets.add(bullet)  # Añadimos la bala creada a nuestro array de balas
+                            self.allSprites.add(self.bullets)  # Añadimos el array a nuestro array de sprites
+                            self.sounds['shoot'].play()  # Reproducimos el sonido de disparar
                         else:
+                            # En el else repetimos el proceso del if, pero con dos balas esta vez
                             leftbullet = Bullet(self.player.rect.x + 8,
                                                 self.player.rect.y + 5, -1,
                                                 15, 'laser', 'left')
@@ -534,27 +575,39 @@ class SpaceInvaders(object):
                             self.allSprites.add(self.bullets)
                             self.sounds['shoot2'].play()
 
+    # Función que se encarga de generar el array de patos
     def make_enemies(self):
-        enemies = EnemiesGroup(10, 5)
+        enemies = EnemiesGroup(10, 5)  # Creamos el grupo de enemigos: será un grupo de 10 columnas y 5 filas
+        # Para cada una de esas columnas y filas generamos un pato
         for row in range(5):
             for column in range(10):
                 enemy = Enemy(row, column)
-                enemy.rect.x = 157 + (column * 50)
-                enemy.rect.y = self.enemyPosition + (row * 45)
-                enemies.add(enemy)
+                enemy.rect.x = 157 + (column * 50)  # Establecemos la coordenada X, según la columna en la que se genere
+                enemy.rect.y = self.enemyPosition + (row * 45)  # Hacemos lo mismo para la coordenada Y según la fila
+                enemies.add(enemy)  # Añadimos el enemigo creado al array de enemigos
 
+        # Definimos el miembro de clase como el grupo de enemigos que creamos al principio de la función y modificamos
+        # durante la misma
         self.enemies = enemies
 
+    # Creamos la función con la que controlaremos el disparo de los patos
     def make_enemies_shoot(self):
+        # Cada vez que el temporizador llege a 700 (0,7 segundos) algún pato disparará, siempre y
+        # cuando quede alguno vivo
         if (time.get_ticks() - self.timer) > 700 and self.enemies:
+            # Elegimos el enemigo que disparará con la función que creamos previamente
             enemy = self.enemies.random_bottom()
+            # Creamos una bala y la añadimos a nuestro array de balas enemigos
             self.enemyBullets.add(
-                Bullet(enemy.rect.x + 14, enemy.rect.y + 20, 1, 5,
-                       'enemylaser', 'center'))
-            self.allSprites.add(self.enemyBullets)
-            self.timer = time.get_ticks()
+                Bullet(enemy.rect.x + 14, enemy.rect.y + 20, 1, 5, 'enemylaser', 'center'))
+            self.allSprites.add(self.enemyBullets)  # Añadimos el array de balas enemigas al array de todos los sprites
+            self.timer = time.get_ticks()  # Reestablecemos el temporizador
 
+    # Función con la que definimos las puntuaciones de los patos y la nave sorpresa y las añadimos a un diccionario
     def calculate_score(self, row):
+        # Creamos un diccionario con las posibles puntuaciones
+        # El elemento con clave 5 será para el enemigo especial,
+        # que elegirá un valor aleatorio entre los 4 del array
         scores = {0: 30,
                   1: 20,
                   2: 20,
@@ -562,37 +615,38 @@ class SpaceInvaders(object):
                   4: 10,
                   5: choice([50, 100, 150, 300])
                   }
-
+        # Elegimos la puntición que obtendremos, según lo que pasemos com parámetro
         score = scores[row]
-        self.score += score
-        return score
+        self.score += score  # Sumamos la puntuación elegida a nuestro marcador
+        return score  # Devolcemos la puntuación obtenida
 
+    # Insertamos las imágenes correspondientes en el menú principal
     def create_main_menu(self):
-        self.enemy1 = IMAGES['enemy3_1']
-        self.enemy1 = transform.scale(self.enemy1, (40, 40))
-        self.enemy2 = IMAGES['enemy2_2']
-        self.enemy2 = transform.scale(self.enemy2, (40, 40))
-        self.enemy3 = IMAGES['enemy1_2']
-        self.enemy3 = transform.scale(self.enemy3, (40, 40))
-        self.enemy4 = IMAGES['mystery']
-        self.enemy4 = transform.scale(self.enemy4, (70, 60))
-        self.screen.blit(self.enemy1, (318, 270))
+        self.enemy1 = IMAGES['enemy3_1']  # Elegimos la imagen del pato verde
+        self.enemy1 = transform.scale(self.enemy1, (40, 40))  # Y la escalamos a 40x40
+        self.enemy2 = IMAGES['enemy2_2']  # Elegimos la imagen del pato azul
+        self.enemy2 = transform.scale(self.enemy2, (40, 40))  # Y la escalamos a 40x40
+        self.enemy3 = IMAGES['enemy1_2']  # Elegimos la imagen del pato rojo
+        self.enemy3 = transform.scale(self.enemy3, (40, 40))  # Y la escalamos a 40x40
+        self.enemy4 = IMAGES['mystery']  # Elegimos la imagen del X-Wing Fighter
+        self.enemy4 = transform.scale(self.enemy4, (70, 39))  # Y la escalamos a 70x39
+        self.screen.blit(self.enemy1, (318, 270))  # Dibujamos en pantalla las imágenes en sus coordenadas
         self.screen.blit(self.enemy2, (318, 320))
         self.screen.blit(self.enemy3, (318, 370))
-        self.screen.blit(self.enemy4, (299, 412))
+        self.screen.blit(self.enemy4, (299, 420))
 
+    # Función para comprobar las colisiones
     def check_collisions(self):
+        ####################################################################################################################
         sprite.groupcollide(self.bullets, self.enemyBullets, True, True)
 
-        for enemy in sprite.groupcollide(self.enemies, self.bullets,
-                                         True, True).keys():
+        for enemy in sprite.groupcollide(self.enemies, self.bullets, True, True).keys():
             self.sounds['invaderkilled'].play()
             self.calculate_score(enemy.row)
             EnemyExplosion(enemy, self.explosionsGroup)
             self.gameTimer = time.get_ticks()
 
-        for mystery in sprite.groupcollide(self.mysteryGroup, self.bullets,
-                                           True, True).keys():
+        for mystery in sprite.groupcollide(self.mysteryGroup, self.bullets, True, True).keys():
             mystery.mysteryEntered.stop()
             self.sounds['mysterykilled'].play()
             score = self.calculate_score(mystery.row)
@@ -601,8 +655,7 @@ class SpaceInvaders(object):
             self.allSprites.add(newShip)
             self.mysteryGroup.add(newShip)
 
-        for player in sprite.groupcollide(self.playerGroup, self.enemyBullets,
-                                          True, True).keys():
+        for player in sprite.groupcollide(self.playerGroup, self.enemyBullets, True, True).keys():
             if self.life3.alive():
                 self.life3.kill()
             elif self.life2.alive():
@@ -612,11 +665,11 @@ class SpaceInvaders(object):
             else:
                 self.gameOver = True
                 self.startGame = False
-            self.sounds['shipexplosion'].play()
+            self.sounds['manexplosion'].play()
             ManDeath(player, self.explosionsGroup)
-            self.makeNewShip = True
-            self.shipTimer = time.get_ticks()
-            self.shipAlive = False
+            self.makeNewMan = True
+            self.manTimer = time.get_ticks()
+            self.manAlive = False
 
         if self.enemies.bottom >= 540:
             sprite.groupcollide(self.enemies, self.playerGroup, True, True)
@@ -629,13 +682,13 @@ class SpaceInvaders(object):
         if self.enemies.bottom >= BLOCKERS_POSITION:
             sprite.groupcollide(self.enemies, self.allBlockers, False, True)
 
-    def create_new_ship(self, createShip, currentTime):
-        if createShip and (currentTime - self.shipTimer > 900):
+    def create_new_man(self, createMan, currentTime):
+        if createMan and (currentTime - self.manTimer > 900):
             self.player = Man()
             self.allSprites.add(self.player)
             self.playerGroup.add(self.player)
-            self.makeNewShip = False
-            self.shipAlive = True
+            self.makeNewMan = False
+            self.manAlive = True
 
     def create_game_over(self, currentTime):
         self.screen.blit(self.background, (0, 0))
@@ -670,7 +723,7 @@ class SpaceInvaders(object):
                     if self.should_exit(e):
                         sys.exit()
                     if e.type == KEYUP:
-                        # Only create blockers on a new game, not a new round
+                        # Creamos los bloques solo en una nueva partida, no en cada nueva ronda
                         self.allBlockers = sprite.Group(self.make_blockers(0),
                                                         self.make_blockers(1),
                                                         self.make_blockers(2),
@@ -685,8 +738,7 @@ class SpaceInvaders(object):
                     currentTime = time.get_ticks()
                     if currentTime - self.gameTimer < 3000:
                         self.screen.blit(self.background, (0, 0))
-                        self.scoreText2 = Text(FONT, 20, str(self.score),
-                                               GREEN, 160, 5)
+                        self.scoreText2 = Text(FONT, 20, str(self.score), GREEN, 160, 5)
                         self.scoreText.draw(self.screen)
                         self.scoreText2.draw(self.screen)
                         self.nextRoundText.draw(self.screen)
@@ -694,7 +746,7 @@ class SpaceInvaders(object):
                         self.livesGroup.update()
                         self.check_input()
                     if currentTime - self.gameTimer > 3000:
-                        # Move enemies closer to bottom
+                        # Mueve a los patos más cerca del suelo
                         self.enemyPosition += ENEMY_MOVE_DOWN
                         self.reset(self.score)
                         self.gameTimer += 3000
@@ -703,8 +755,7 @@ class SpaceInvaders(object):
                     self.play_main_music(currentTime)
                     self.screen.blit(self.background, (0, 0))
                     self.allBlockers.update(self.screen)
-                    self.scoreText2 = Text(FONT, 20, str(self.score), GREEN,
-                                           160, 5)
+                    self.scoreText2 = Text(FONT, 20, str(self.score), GREEN, 160, 5)
                     self.scoreText.draw(self.screen)
                     self.scoreText2.draw(self.screen)
                     self.livesText.draw(self.screen)
@@ -713,12 +764,12 @@ class SpaceInvaders(object):
                     self.allSprites.update(self.keys, currentTime)
                     self.explosionsGroup.update(currentTime)
                     self.check_collisions()
-                    self.create_new_ship(self.makeNewShip, currentTime)
+                    self.create_new_man(self.makeNewMan, currentTime)
                     self.make_enemies_shoot()
 
             elif self.gameOver:
                 currentTime = time.get_ticks()
-                # Reset enemy starting position
+                # Reseteamos la posición inicial de los patos
                 self.enemyPosition = ENEMY_DEFAULT_POSITION
                 self.create_game_over(currentTime)
 
