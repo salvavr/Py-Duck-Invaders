@@ -412,7 +412,7 @@ class Life(sprite.Sprite):
     def __init__(self, xpos, ypos):
         sprite.Sprite.__init__(self)
         self.image = IMAGES['man']  # Definimos que imagen coger del diccionario de imágenes
-        self.image = transform.scale(self.image, (23, 23))  # Redimensionamos la imagen
+        self.image = transform.scale(self.image, (15, 23))  # Redimensionamos la imagen
         self.rect = self.image.get_rect(topleft=(xpos, ypos))  # Definimos el rectángulo y sus coordenadas
 
     # Con esta función pintamos las 3 imágenes para las vidas del jugador
@@ -453,7 +453,7 @@ class SpaceInvaders(object):
         self.titleText = Text(FONT, 50, 'Py-Duck Invaders', WHITE, 134, 155)
         self.titleText2 = Text(FONT, 25, 'Pulse una tecla para empezar', WHITE, 170, 225)
         self.gameOverText = Text(FONT, 50, 'Game Over', WHITE, 250, 270)
-        self.nextRoundText = Text(FONT, 50, 'Next Round', WHITE, 240, 270)
+        self.nextRoundText = Text(FONT, 50, 'Siguiente Nivel', WHITE, 170, 270)
         self.enemy1Text = Text(FONT, 25, '   =   10 pts', GREEN, 368, 270)
         self.enemy2Text = Text(FONT, 25, '   =   20 pts', BLUE, 368, 320)
         self.enemy3Text = Text(FONT, 25, '   =   30 pts', PURPLE, 368, 370)
