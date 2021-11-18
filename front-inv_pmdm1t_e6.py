@@ -601,7 +601,7 @@ class SpaceInvaders(object):
             self.enemyBullets.add(
                 Bullet(enemy.rect.x + 14, enemy.rect.y + 20, 1, 5, 'enemylaser', 'center'))
             self.allSprites.add(self.enemyBullets)  # Añadimos el array de balas enemigas al array de todos los sprites
-            self.timer = time.get_ticks()  # Reestablecemos el temporizador
+            self.timer = time.get_ticks()  # Reseteamos el temporizador
 
     # Función con la que definimos las puntuaciones de los patos y la nave sorpresa y las añadimos a un diccionario
     def calculate_score(self, row):
@@ -649,35 +649,42 @@ class SpaceInvaders(object):
             mystery.mysteryEntered.stop()  # Detenemos el sonido de entrada si la nave es derribada
             self.sounds['mysterykilled'].play()  # Reproducimos el sonido de derribo de la nave
             score = self.calculate_score(mystery.row)  # Llamamos a la función que se encarga de elegir la puntuación
-            MysteryExplosion(mystery, score, self.explosionsGroup)
-            newShip = Mystery()
-            self.allSprites.add(newShip)
-            self.mysteryGroup.add(newShip)
+            MysteryExplosion(mystery, score, self.explosionsGroup)  # Pasamos los parámetros a la clase correspondiente
+            newShip = Mystery()  # Inicializamos una nueva nave misteriosa
+            self.allSprites.add(newShip)  # Añadimos la nueva nave al conjunto global de sprites
+            self.mysteryGroup.add(newShip)  # Y la añadimos también a su grupo correspondiente
 
+        # Comprobamos las colisiones entre el cazador y los "disparos" de los patos
         for player in sprite.groupcollide(self.playerGroup, self.enemyBullets, True, True).keys():
+            # Lo primero será restarle una vida al jugador si ha sido alcanzado por un disparo
             if self.life3.alive():
                 self.life3.kill()
             elif self.life2.alive():
                 self.life2.kill()
             elif self.life1.alive():
                 self.life1.kill()
-            else:
+            else:  # Y si no hay vidas restantes, finalizamos la partida
                 self.gameOver = True
                 self.startGame = False
-            self.sounds['manexplosion'].play()
-            ManDeath(player, self.explosionsGroup)
+            self.sounds['manexplosion'].play()  # Reproducimos el sonido de muerte del cazador
+            ManDeath(player, self.explosionsGroup)  # Pasamos los parámetros necesarios a la clase ManDeath
             self.makeNewMan = True
             self.manTimer = time.get_ticks()
             self.manAlive = False
 
+        # Con estos if restaremos una vida o finalizaremos el juego si los patos se acercan lo suficiente al cazador
+        # como para colisionar con él o si los patos descienden tanto que llegan al suelo
         if self.enemies.bottom >= 540:
             sprite.groupcollide(self.enemies, self.playerGroup, True, True)
             if not self.player.alive() or self.enemies.bottom >= 600:
                 self.gameOver = True
                 self.startGame = False
 
+        # Controlamos las colisiones entre los disparos del cazador con las barricadas y entre las barricadas y los
+        # "disparos" de los patos
         sprite.groupcollide(self.bullets, self.allBlockers, True, True)
         sprite.groupcollide(self.enemyBullets, self.allBlockers, True, True)
+        # Colisión de los patos con los bloques, los patos romperán los bloques a su paso
         if self.enemies.bottom >= BLOCKERS_POSITION:
             sprite.groupcollide(self.enemies, self.allBlockers, False, True)
 
@@ -737,7 +744,7 @@ class SpaceInvaders(object):
                     currentTime = time.get_ticks()
                     if currentTime - self.gameTimer < 3000:
                         self.screen.blit(self.background, (0, 0))
-                        self.scoreText2 = Text(FONT, 20, str(self.score), GREEN2, 110, 5)
+                        self.scoreText2 = Text(FONT, 20, str(self.score), GREEN2, 110, 5)  # Puntuación en Next lvl
                         self.scoreText.draw(self.screen)
                         self.scoreText2.draw(self.screen)
                         self.nextRoundText.draw(self.screen)
@@ -754,7 +761,7 @@ class SpaceInvaders(object):
                     self.play_main_music(currentTime)
                     self.screen.blit(self.background, (0, 0))
                     self.allBlockers.update(self.screen)
-                    self.scoreText2 = Text(FONT, 20, str(self.score), GREEN2, 110, 5)  # Dibujamos la puntuación
+                    self.scoreText2 = Text(FONT, 20, str(self.score), GREEN2, 110, 5)  # Puntuación mientras se juega
                     self.scoreText.draw(self.screen)
                     self.scoreText2.draw(self.screen)
                     self.livesText.draw(self.screen)
