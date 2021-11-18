@@ -684,18 +684,23 @@ class SpaceInvaders(object):
         # "disparos" de los patos
         sprite.groupcollide(self.bullets, self.allBlockers, True, True)
         sprite.groupcollide(self.enemyBullets, self.allBlockers, True, True)
-        # Colisión de los patos con los bloques, los patos romperán los bloques a su paso
+        # Con este if vamos a hacer que cuando los patos colisionen  con los bloques, los patos romperán los bloques
+        # a su paso, pero los patos quedarán intactos
         if self.enemies.bottom >= BLOCKERS_POSITION:
             sprite.groupcollide(self.enemies, self.allBlockers, False, True)
 
+    # Función a la que se llama para que se encargue de crear un nuevo cazador cuando muera el anterior
     def create_new_man(self, createMan, currentTime):
         if createMan and (currentTime - self.manTimer > 900):
-            self.player = Man()
-            self.allSprites.add(self.player)
-            self.playerGroup.add(self.player)
+            self.player = Man()  # Llamada a la clase del cazador
+            self.allSprites.add(self.player)  # Agrupamos el sprite al grupo de todos los sprites
+            self.playerGroup.add(self.player)  # Agrupamos el sprite al grupo de sprites del jugador
             self.makeNewMan = False
             self.manAlive = True
 
+    # Función que mostrará el mensaje de GAME OVER. Para crear un efecto de parpadeo en el mensaje controlaremos con
+    # if y elif el tiempo que transcurre y alternaremos entre mensaje y fondo de pantalla. Finalmente regrersamos a la
+    # pantalla principal del juego
     def create_game_over(self, currentTime):
         self.screen.blit(self.background, (0, 0))
         passed = currentTime - self.timer
@@ -710,12 +715,15 @@ class SpaceInvaders(object):
         elif passed > 3000:
             self.mainScreen = True
 
+        # Si cerramos nuestro juego, acabamos con la ejecución del programa
         for e in event.get():
             if self.should_exit(e):
                 sys.exit()
 
+    # Esta función se encarga de lanzar el menú principal con todos sus elementos (fondo, textos, imágenes, etc)
     def main(self):
         while True:
+            # A mostrar en el menú principal
             if self.mainScreen:
                 self.screen.blit(self.background, (0, 0))
                 self.titleText.draw(self.screen)
@@ -725,37 +733,45 @@ class SpaceInvaders(object):
                 self.enemy3Text.draw(self.screen)
                 self.enemy4Text.draw(self.screen)
                 self.create_main_menu()
+
+                # Si cerramos nuestro juego, acabamos con la ejecución del programa
                 for e in event.get():
                     if self.should_exit(e):
                         sys.exit()
                     if e.type == KEYUP:
-                        # Creamos los bloques solo en una nueva partida, no en cada nueva ronda
+                        # Creamos los bloques solo al comenzar la nueva partida, no en cada nueva ronda
                         self.allBlockers = sprite.Group(self.make_blockers(0),
                                                         self.make_blockers(1),
                                                         self.make_blockers(2),
                                                         self.make_blockers(3))
-                        self.livesGroup.add(self.life1, self.life2, self.life3)
+                        self.livesGroup.add(self.life1, self.life2, self.life3)  # Generamos las 3 vidas del jugador
                         self.reset(0)
                         self.startGame = True
                         self.mainScreen = False
 
+            # A mostrar en la pantalla de juego
             elif self.startGame:
+                # Comprobamos que no queden enemigos ni animaciones
                 if not self.enemies and not self.explosionsGroup:
                     currentTime = time.get_ticks()
+                    # Mostraremos en la pantalla de entre niveles el fondo de pantalla, la puntuación, las vidas, etc
                     if currentTime - self.gameTimer < 3000:
                         self.screen.blit(self.background, (0, 0))
-                        self.scoreText2 = Text(FONT, 20, str(self.score), GREEN2, 110, 5)  # Puntuación en Next lvl
+                        self.scoreText2 = Text(FONT, 20, str(self.score), GREEN2, 110, 5)  # Puntuación al pasar ronda
                         self.scoreText.draw(self.screen)
                         self.scoreText2.draw(self.screen)
                         self.nextRoundText.draw(self.screen)
                         self.livesText.draw(self.screen)
                         self.livesGroup.update()
                         self.check_input()
+                    # Pasados 3seg movemos al grupo de patos una fila más cerca del suelo para aumentar la dificultad
                     if currentTime - self.gameTimer > 3000:
-                        # Mueve a los patos más cerca del suelo
                         self.enemyPosition += ENEMY_MOVE_DOWN
-                        self.reset(self.score)
+                        self.reset(self.score)  # Respetamos la puntuación acumulada del jugador
                         self.gameTimer += 3000
+
+                # De lo contrario pasaremos a mostrar en la pantalla de juego el fondo, las barricadas, los puntos, etc.
+                # Y cargamos las clases necesarias para la partida
                 else:
                     currentTime = time.get_ticks()
                     self.play_main_music(currentTime)
@@ -773,16 +789,17 @@ class SpaceInvaders(object):
                     self.create_new_man(self.makeNewMan, currentTime)
                     self.make_enemies_shoot()
 
+            # Y como alternativa a la pantalla del menú y la del juego tenemos el game over que reseteará la partida
             elif self.gameOver:
                 currentTime = time.get_ticks()
                 # Reseteamos la posición inicial de los patos
                 self.enemyPosition = ENEMY_DEFAULT_POSITION
                 self.create_game_over(currentTime)
 
-            display.update()
-            self.clock.tick(60)
+            display.update()  # Actualizamos la ventana
+            self.clock.tick(60)  # Ajustamos el reloj a 60 fps
 
 
 if __name__ == '__main__':
-    game = SpaceInvaders()
-    game.main()
+    game = SpaceInvaders()  # Creamos el objeto "game" de tipo "SpaceInvaders"
+    game.main()  # Llamamos a la función "main()" del objeto
