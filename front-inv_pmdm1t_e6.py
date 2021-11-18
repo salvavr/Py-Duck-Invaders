@@ -564,10 +564,10 @@ class SpaceInvaders(object):
                             self.sounds['shoot'].play()  # Reproducimos el sonido de disparar
                         else:
                             # En el else repetimos el proceso del if, pero con dos balas esta vez
-                            leftbullet = Bullet(self.player.rect.x + 8,
+                            leftbullet = Bullet(self.player.rect.x + 4,
                                                 self.player.rect.y + 5, -1,
                                                 15, 'laser', 'left')
-                            rightbullet = Bullet(self.player.rect.x + 38,
+                            rightbullet = Bullet(self.player.rect.x + 32,
                                                  self.player.rect.y + 5, -1,
                                                  15, 'laser', 'right')
                             self.bullets.add(leftbullet)
