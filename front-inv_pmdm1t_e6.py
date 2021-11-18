@@ -449,7 +449,7 @@ class SpaceInvaders(object):
         self.enemyPosition = ENEMY_DEFAULT_POSITION  # Contador para la posición de inicio de los patos (la
         # incrementamos en cada nueva ronda)
 
-        # Establecemos los textos y puntuaciones de cada pato en el menú principal
+        # Establecemos los textos y puntuaciones en el menú principal
         self.titleText = Text(FONT, 50, 'Py-Duck Invaders', WHITE, 134, 155)
         self.titleText2 = Text(FONT, 25, 'Pulse una tecla para empezar', WHITE, 170, 225)
         self.gameOverText = Text(FONT, 50, 'Game Over', WHITE, 250, 270)
@@ -458,7 +458,7 @@ class SpaceInvaders(object):
         self.enemy2Text = Text(FONT, 25, '   =   20 pts', BLUE, 368, 320)
         self.enemy3Text = Text(FONT, 25, '   =   30 pts', PURPLE, 368, 370)
         self.enemy4Text = Text(FONT, 25, '   =   ?????', WHITE, 368, 420)
-        self.scoreText = Text(FONT, 20, 'Puntuacion', WHITE, 5, 5)
+        self.scoreText = Text(FONT, 20, 'Puntos', WHITE, 5, 5)
         self.livesText = Text(FONT, 20, 'Vidas ', WHITE, 640, 5)
 
         # Pasamos a la clase Life las coordenadas para que nos dibuje las 3 vidas ahí
@@ -518,21 +518,21 @@ class SpaceInvaders(object):
 
     # Reproducimos nuestras 4 notas cuando corresponda
     def play_main_music(self, currentTime):
-            # Establecemos qué nota sonará, de acuerdo a nuestro índice
-            self.note = self.musicNotes[self.noteIndex]
+        # Establecemos qué nota sonará, de acuerdo a nuestro índice
+        self.note = self.musicNotes[self.noteIndex]
 
-            # Si no hemos llegado a nuestra última nota (índice 3), aumentamos el índice para la siguiente ejecución
-            if self.noteIndex < 3:
-                self.noteIndex += 1
-            else:  # Si llegamos al índice 3 volvemos a estrablecer el índice a 0
-                self.noteIndex = 0
+        # Si no hemos llegado a nuestra última nota (índice 3), aumentamos el índice para la siguiente ejecución
+        if self.noteIndex < 3:
+            self.noteIndex += 1
+        else:  # Si llegamos al índice 3 volvemos a establecer el índice a 0
+            self.noteIndex = 0
 
-            # Reproducimos la nota en cuestión
-            self.note.play()
+        # Reproducimos la nota en cuestión
+        self.note.play()
 
-            # Establecemos el temporizador que controlará cuándo suena la nota para que esté sincronizado con el avance
-            # de los patos
-            self.noteTimer += self.enemies.moveTime
+        # Establecemos el temporizador que controlará cuándo suena la nota para que esté sincronizado con el avance
+        # de los patos
+        self.noteTimer += self.enemies.moveTime
 
     # Con esta función devolvemos un boolean, que será true si cerramos nuestro juego o si pulsamos alguna tecla
     # Nos será útil posteriormente para controlar el input por teclado
@@ -632,21 +632,23 @@ class SpaceInvaders(object):
         self.screen.blit(self.enemy3, (318, 370))
         self.screen.blit(self.enemy4, (299, 420))
 
-    # Función para comprobar las colisiones
+    # Función para comprobar las colisiones que agruparemos en un for para cada uno
     def check_collisions(self):
-        ####################################################################################################################
+        # Primero comprobamos las colisiones entre los grupos de sprites de las balas del cazador y los patos
         sprite.groupcollide(self.bullets, self.enemyBullets, True, True)
 
+        # Comprobamos las colisiones entre las balas del cazador y los patos
         for enemy in sprite.groupcollide(self.enemies, self.bullets, True, True).keys():
-            self.sounds['invaderkilled'].play()
-            self.calculate_score(enemy.row)
-            EnemyExplosion(enemy, self.explosionsGroup)
+            self.sounds['invaderkilled'].play()  # Reproducimos el sonido en caso de que colisiones
+            self.calculate_score(enemy.row)  # Comprobamos en que fila ha sido
+            EnemyExplosion(enemy, self.explosionsGroup)  # Seleccionamos y lanzamos la animación de muerte del pato
             self.gameTimer = time.get_ticks()
 
+        # Comprobamos las colisiones entre las balas del cazador y el X-Wing Fighter
         for mystery in sprite.groupcollide(self.mysteryGroup, self.bullets, True, True).keys():
-            mystery.mysteryEntered.stop()
-            self.sounds['mysterykilled'].play()
-            score = self.calculate_score(mystery.row)
+            mystery.mysteryEntered.stop()  # Detenemos el sonido de entrada si la nave es derribada
+            self.sounds['mysterykilled'].play()  # Reproducimos el sonido de derribo de la nave
+            score = self.calculate_score(mystery.row)  # Llamamos a la función que se encarga de elegir la puntuación
             MysteryExplosion(mystery, score, self.explosionsGroup)
             newShip = Mystery()
             self.allSprites.add(newShip)
@@ -735,7 +737,7 @@ class SpaceInvaders(object):
                     currentTime = time.get_ticks()
                     if currentTime - self.gameTimer < 3000:
                         self.screen.blit(self.background, (0, 0))
-                        self.scoreText2 = Text(FONT, 20, str(self.score), GREEN, 160, 5)
+                        self.scoreText2 = Text(FONT, 20, str(self.score), GREEN2, 110, 5)
                         self.scoreText.draw(self.screen)
                         self.scoreText2.draw(self.screen)
                         self.nextRoundText.draw(self.screen)
@@ -752,7 +754,7 @@ class SpaceInvaders(object):
                     self.play_main_music(currentTime)
                     self.screen.blit(self.background, (0, 0))
                     self.allBlockers.update(self.screen)
-                    self.scoreText2 = Text(FONT, 20, str(self.score), GREEN, 160, 5)
+                    self.scoreText2 = Text(FONT, 20, str(self.score), GREEN2, 110, 5)  # Dibujamos la puntuación
                     self.scoreText.draw(self.screen)
                     self.scoreText2.draw(self.screen)
                     self.livesText.draw(self.screen)
