@@ -518,21 +518,22 @@ class SpaceInvaders(object):
 
     # Reproducimos nuestras 4 notas cuando corresponda
     def play_main_music(self, currentTime):
-        # Establecemos qué nota sonará, de acuerdo a nuestro índice
-        self.note = self.musicNotes[self.noteIndex]
+        if currentTime - self.noteTimer > self.enemies.moveTime:
+            # Establecemos qué nota sonará, de acuerdo a nuestro índice
+            self.note = self.musicNotes[self.noteIndex]
 
-        # Si no hemos llegado a nuestra última nota (índice 3), aumentamos el índice para la siguiente ejecución
-        if self.noteIndex < 3:
-            self.noteIndex += 1
-        else:  # Si llegamos al índice 3 volvemos a establecer el índice a 0
-            self.noteIndex = 0
+            # Si no hemos llegado a nuestra última nota (índice 3), aumentamos el índice para la siguiente ejecución
+            if self.noteIndex < 3:
+                self.noteIndex += 1
+            else:  # Si llegamos al índice 3 volvemos a establecer el índice a 0
+                self.noteIndex = 0
 
-        # Reproducimos la nota en cuestión
-        self.note.play()
+            # Reproducimos la nota en cuestión
+            self.note.play()
 
-        # Establecemos el temporizador que controlará cuándo suena la nota para que esté sincronizado con el avance
-        # de los patos
-        self.noteTimer += self.enemies.moveTime
+            # Establecemos el temporizador que controlará cuándo suena la nota para que esté sincronizado con el avance
+            # de los patos
+            self.noteTimer += self.enemies.moveTime
 
     # Con esta función devolvemos un boolean, que será true si cerramos nuestro juego o si pulsamos alguna tecla
     # Nos será útil posteriormente para controlar el input por teclado
